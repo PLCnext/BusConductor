@@ -1,0 +1,119 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<TIC xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.phoenixcontact.com/IMA/TIC/1.0/tic.xsd">
+  <E n="IB:Master">
+    <AL>
+      <A n="DeviceCount">
+        <V>1</V>
+      </A>
+      <A n="CycleTime">
+        <V>0</V>
+      </A>
+      <A n="StartupDelay">
+        <V>0</V>
+      </A>
+      <A n="BusWarnTime">
+        <V>0</V>
+      </A>
+      <A n="BusTimeout">
+        <V>0</V>
+      </A>
+      <A n="InputBehavior">
+        <V>0</V>
+      </A>
+      <A n="PCPStartup">
+        <V>false</V>
+      </A>
+    </AL>
+    <EL>
+      <E n="IO:Frames">
+        <AL>
+          <A n="FrameCount">
+            <V>2</V>
+          </A>
+        </AL>
+        <EL>
+          <E n="IO:Frame">
+            <AL>
+              <A n="FrameId">
+                <V>1:IN</V>
+              </A>
+              <A n="Length">
+                <V>256</V>
+              </A>
+            </AL>
+            <EL>
+              <E n="IO:Ports">
+                <AL>
+                  <A n="PortCount">
+                    <V>1</V>
+                  </A>
+                </AL>
+                <EL>
+                  <E n="IO:Port">
+                    <AL>
+                      <A n="NodeId">
+                        <V>0</V>
+                      </A>
+                      <A n="Name">
+                        <V>~DI256</V>
+                      </A>
+                      <A n="DataType">
+                        <V>OctetstringN</V>
+                      </A>
+                      <A n="Offset">
+                        <V>0.0</V>
+                      </A>
+                      <A n="Length">
+                        <V>256.0</V>
+                      </A>
+                    </AL>
+                  </E>
+                </EL>
+              </E>
+            </EL>
+          </E>
+          <E n="IO:Frame">
+            <AL>
+              <A n="FrameId">
+                <V>1:OUT</V>
+              </A>
+              <A n="Length">
+                <V>256</V>
+              </A>
+            </AL>
+            <EL>
+              <E n="IO:Ports">
+                <AL>
+                  <A n="PortCount">
+                    <V>1</V>
+                  </A>
+                </AL>
+                <EL>
+                  <E n="IO:Port">
+                    <AL>
+                      <A n="NodeId">
+                        <V>0</V>
+                      </A>
+                      <A n="Name">
+                        <V>~DO256</V>
+                      </A>
+                      <A n="DataType">
+                        <V>OctetstringN</V>
+                      </A>
+                      <A n="Offset">
+                        <V>0.0</V>
+                      </A>
+                      <A n="Length">
+                        <V>256.0</V>
+                      </A>
+                    </AL>
+                  </E>
+                </EL>
+              </E>
+            </EL>
+          </E>
+        </EL>
+      </E>
+    </EL>
+  </E>
+</TIC>

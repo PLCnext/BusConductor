@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<TIC xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.phoenixcontact.com/IMA/TIC/1.0/tic.xsd">
+  <E n="AXLF:Device">
+    <AL>
+      <A n="UsedAttributes">
+        <V>0007</V>
+      </A>
+      <A n="NodeId">
+        <V>0</V>
+      </A>
+      <A n="ConsecutiveNumber">
+        <V>1</V>
+      </A>
+      <A n="DeviceType">
+        <V>00FFFFFF</V>
+      </A>
+      <A n="DeviceId">
+        <V>99998888</V>
+      </A>
+      <A n="DeviceLength">
+        <V>4096</V>
+      </A>
+    </AL>
+    <EL>
+      <E n="PARAS" />
+    </EL>
+  </E>
+</TIC>
