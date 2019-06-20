@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # PLCnext Technology - Dynamic Bus Configuration
 
 [![Feature Requests](https://img.shields.io/github/issues/PLCnext/MqttGdsConnector/feature-request.svg)](https://github.com/PLCnext/MqttGdsConnector/issues?q=is%3Aopen+is%3Aissue+label%3Afeature-request+sort%3Areactions-%2B1-desc)
