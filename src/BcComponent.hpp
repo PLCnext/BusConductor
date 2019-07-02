@@ -1,5 +1,5 @@
 ﻿//
-// Copyright (c) Phoenix Contact GmbH & Co. KG. All rights reserved.
+// Copyright (c) 2019 Phoenix Contact GmbH & Co. KG. All rights reserved.
 // Licensed under the MIT. See LICENSE file in the project root for full license information.
 //
 
@@ -76,7 +76,7 @@ private:
 	void Update();  // Operation that is executed on each thread loop
 
 public: // custom methods
-	bool ConfigureLocalIo();
+	bool ConfigureLocalIo(bool validateConfig, string configFile);
 	bool StartLocalIo();
 	void ReadLocalIoStatus();
 
@@ -96,6 +96,7 @@ public: /* Ports
     struct BUS_CONDUCTOR
     {
     	boolean CONFIG_REQ = 0;         // Request bus (re)configuration
+    	boolean CONFIG_MUST_MATCH = 0;	// Don't start the local bus unless it matches user-defined configuration
     	boolean START_IO_REQ = 0;       // Request start I/O data exchange
     	boolean CONFIGURED = 0;         // Bus is configured
     	boolean RUNNING = 0;            // Bus is exchanging I/O data

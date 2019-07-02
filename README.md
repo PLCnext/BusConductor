@@ -1,14 +1,14 @@
-# PLCnext Technology - Dynamic Bus Configuration
+# PLCnext Technology - Bus Conductor
 
-[![Feature Requests](https://img.shields.io/github/issues/PLCnext/MqttGdsConnector/feature-request.svg)](https://github.com/PLCnext/MqttGdsConnector/issues?q=is%3Aopen+is%3Aissue+label%3Afeature-request+sort%3Areactions-%2B1-desc)
-[![Bugs](https://img.shields.io/github/issues/PLCnext/MqttGdsConnector/bug.svg)](https://github.com/PLCnext/MqttGdsConnector/issues?utf8=✓&q=is%3Aissue+is%3Aopen+label%3Abug)
+[![Feature Requests](https://img.shields.io/github/issues/PLCnext/BusConductor/feature-request.svg)](https://github.com/PLCnext/BusConductor/issues?q=is%3Aopen+is%3Aissue+label%3Afeature-request+sort%3Areactions-%2B1-desc)
+[![Bugs](https://img.shields.io/github/issues/PLCnext/BusConductor/bug.svg)](https://github.com/PLCnext/BusConductor/issues?utf8=✓&q=is%3Aissue+is%3Aopen+label%3Abug)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Web](https://img.shields.io/badge/PLCnext-Website-blue.svg)](https://www.phoenixcontact.com/plcnext)
 [![Community](https://img.shields.io/badge/PLCnext-Community-blue.svg)](https://www.plcnext-community.net)
 
 | Date       | Version | Authors                     |
 |------------|---------|-----------------------------|
-| 24.05.2019 | 1.0.0   | Martin Boers                |
+| 02.07.2019 | 1.0     | Martin Boers                |
 
 
 ## Description
@@ -21,33 +21,60 @@ This app can be used in any application where the precise I/O configuration is n
 
 1. A PLCnext Control used as a general-purpose RTU, data logger, or multiplexer, where the I/O arrangement must be flexible.
 
-1. A custom PLCnext Control run-time written in any language (e.g. C/C++, rust, java, python) which requires flexible local I/O, but which does not want to manipulate .tic files. This can be used by applications like [Sample Runtime](https://github.com/PLCnext/SampleRuntime) so that PLCnext Engineer is no longer required for I/O configuration.
+1. A custom PLCnext Control run-time written in any language (e.g. C/C++, rust, node.js, python) which requires flexible local I/O, but which does not want to manipulate .tic files. This can be used by applications like [Sample Runtime](https://github.com/PLCnext/SampleRuntime) so that PLCnext Engineer is no longer required for I/O configuration.
 
 The source code for this app is freely available. Software developers who want to build this type of functionality into their own projects are free to use this app as a reference.
 
 Note: The terms "Inline" and "Interbus" are used interchangeably in this document, since the Inline I/O system uses the Interbus communication protocol.
 
+## Background
+
+On a PLCnext Control, local I/O can only be accessed through system components that are started as part of the plcnext process. The system components that handle local I/O - either Axioline or Inline - must be configured using TIC ("Technology Independent Configuration") files, which are XML files in a format defined by Phoenix Contact.
+
+Currently the only practical method of generating a valid set of TIC files is by using PLCnext Engineer software, where the arrangement of local I/O modules must be configured manually. In the background, PLCnext Engineer generates TIC files for the specified hardware configuration, which are sent to the PLC with the PLCnext Engineer project.
+
+Once on the PLC, TIC files are read during startup of the plcnext process. TIC files cannot be reloaded while the plcnext process is running.
+
+This application demonstrates how to use a single set of TIC files to configure and re-configure the arrangement of local I/O modules that are connected to a PLC - without the need to manually create different I/O module arrangements in PLCnext Engineer.
+
 ## Installation
 
-Download the app from the PLCnext Store and install the PLCnext Engineer library called "BusConductor" on the host machine.
+Download the app from the PLCnext Store and install the "BusConductor" library on the host machine.
+
+## Building from source
+
+The project can be built using the PLCnext CLI tool, either from the command-line or from Eclipse (with the PLCnext add-in). The SDK for AXC F 2152 firmware version 2019.3 is required. 
+
+When building from the command line, the following commands should be called in sequence from the project root directory:
+   ```
+   plcncli generate code
+   plcncli generate config
+   plcncli build
+   plcncli generate library
+   ```
 
 ## Operation
 
 The BusConductor library contains one component, called BcComponent. One instance of this component must be created by the user. The component includes one GDS port named "BusConductor", which is a structure containing the following fields:
 
-| Field name   | C++ Type | Direction | Description                                |
-|--------------|----------|-----------|--------------------------------------------|
-| CONFIG_REQ   | boolean  | input     | Requst to (re-)configure the local bus     |
-| START_IO_REQ | boolean  | input     | Request to start local I/O exchange        |
-| CONFIGURED   | boolean  | output    | Local bus has been (re-)configured         |
-| RUNNING      | boolean  | output    | Local bus is exchanging I/O                |
-| NUM_MODULES  | uint16   | output    | Total number of local I/O modules detected |
+| Field name        | C++ Type | Direction | Description                                                         |
+|-------------------|----------|-----------|---------------------------------------------------------------------|
+| CONFIG_REQ        | boolean  | input     | Requst to (re-)configure the local bus                              |
+| CONFIG_MUST_MATCH | boolean  | input     | Local bus configuration must match the user-specified configuration |
+| START_IO_REQ      | boolean  | input     | Request to start local I/O exchange                                 |
+| CONFIGURED        | boolean  | output    | Local bus has been (re-)configured                                  |
+| RUNNING           | boolean  | output    | Local bus is exchanging I/O                                         |
+| NUM_MODULES       | uint16   | output    | Total number of local I/O modules detected                          |
 
-The two REQ commands are processed on a rising edge. 
+The two REQ commands are processed on a rising edge. They both be set in sequence, and START_IO_REQ will not be processed if CONFIGURED is not TRUE.
 
-Once the local bus is running, process data can be exchanged with all local I/O modules using the GDS ports "Arp.Io.AxlC/0.DI4096" (inputs) and "Arp.Io.AxlC/0.DO4096" (outputs).
+If CONFIG_MUST_MATCH is TRUE, then the user must place a file named `config.txt` in the PLC directory `/opt/plcnext/projects/BusConductor`. This file contains the expected local I/O module arrangement, and is checked (if necessary) during the processing of the CONFIG_REQ command. If there is any mis-match detected between the contents of this file and the actual local I/O configuration, then CONFIGURED will remain FALSE, and the bus cannot be started. In this case, check the Output.log file on the PLC for error messages.
 
-Output variables are latched, and are only reset on a rising edge of the CONFIG_REQ input. Once running, the real-time status of the local I/O bus should be monitored using the diagnostics variables provided by the PLCnext Control (refer to the "Local bus diagnostics" section below).
+If CONFIG_MUST_MATCH is FALSE, then no configuration checking is done, and a `config.txt` file does not need to be provided.
+
+Output variables from the BusConductor component are latched, and are only reset on a rising edge of the CONFIG_REQ input. Once running, the real-time status of the local I/O bus should be monitored using the diagnostics variables provided by the PLCnext Control (refer to the "Local bus diagnostics" section below).
+
+Once the local bus is running, process data can be exchanged with all local I/O modules using the GDS ports "Arp.Io.AxlC/0.DI4096" (inputs) and "Arp.Io.AxlC/0.DO4096" (outputs). Process data from each I/O module will appear in these two arrays in the same order that the modules appear on the local bus. The amount of process data for each I/O module can be obtained from the data sheet for that module.
 
 Note that this app starts all I/O modules using the configuration that is stored in the module. Any changes to module-specific configuration (e.g. analog output channel configuration) must be done separately, using (for example) the `PDI_WRITE` function block in the PLCnext Controller library, or the Acyclic Communication RSC service, or the [Startup+](http://www.phoenixcontact.net/product/2700636) configuration tool.
 
@@ -67,12 +94,13 @@ This app is packaged as a PLCnext Engineer Library, but can be used without PLCn
    END_TYPE
 
    TYPE
-     BUS_CONDUCTOR : STRUCT
-       CONFIG_REQ   : BOOL;
-       START_IO_REQ : BOOL;
-       CONFIGURED   : BOOL;
-       RUNNING      : BOOL;
-       NUM_MODULES  : UINT;
+     BUS_CONDUCTOR       : STRUCT
+       CONFIG_REQ        : BOOL;
+       CONFIG_MUST_MATCH : BOOL;
+       START_IO_REQ      : BOOL;
+       CONFIGURED        : BOOL;
+       RUNNING           : BOOL;
+       NUM_MODULES       : UINT;
      END_STRUCT
    END_TYPE
    ```
@@ -98,6 +126,7 @@ This app is packaged as a PLCnext Engineer Library, but can be used without PLCn
 - Create one instance of the `BcProgram` program (from the BusConductor library) in a PLCnext Task.
 - In the PLCnext Port List, connect the ports `BusConfig_Inputs` and `BusConfig_Outputs` to the `BusConductor` port on `BcComponent1`.
 - Download the PLCnext Engineer project to the PLC and enter Debug mode.
+- Set the variable `BusConfig_Outputs.CONFIG_MUST_MATCH` to FALSE.
 - Set the variable `BusConfig_Outputs.CONFIG_REQ` to TRUE.
 - Check that the variable `BusConfig_Inputs.CONFIGURED` goes TRUE, and `BusConfig_Inputs.NUM_MODULES` is set to the total number of I/O modules on the local bus. The local bus is now configured and ready to exchange I/O data.
 - Set the variable `BusConfig_Outputs.START_IO_REQ` to TRUE.
@@ -120,14 +149,14 @@ This example describes the use of Axioline I/O. A similar procedure is used to c
 - On the PLC, download the ACF configuration file from the Github repository:
    ```
    cd /opt/plcnext/projects/BusConductor
-   wget http://github.... 
+   wget http://github.com/PLCnext/BusConductor/BusConductor.acf.config
    ```
-   The acf.config file tells the ACF to load the shared object library and create one instance of the BusConductor component.
+   The acf.config file instructs the ACF to load the shared object library and create one instance of the BusConductor component.
 - Check that the contents of the acf.config file are correct. For example, the path to the shared object library may need to be updated for your installation. 
 - Download the generic Axioline I/O configuration from Github.
    ```
    cd /opt/plcnext/projects/BusConductor
-   wget --recursive --no-parent http://example.com/generic_axioline/
+   wget --recursive --no-parent http://github.com/PLCnext/BusConductor/generic_axioline/
    ```
 - Change the 'current' symlink to point to the new project directory.
    ```
@@ -140,17 +169,53 @@ This example describes the use of Axioline I/O. A similar procedure is used to c
 - Restart the PLCnext runtime to create the BusConductor component.
 - If using the acf.config file in this example, the name of the BusConductor port in the Global Data Space will be "BcComponent1/BusConductor"
 
-You must now send commands to the BcComponent instance from your own application via the Global Data Space. How this is done will be specific to each user application. For example, you can use a gds.config file to connect the BusConductor port to a GDS port in your own C++ project, or you can read and write GDS data by subscribing to the Data Access RSC Service in the PLC.
+You must now send commands to the BcComponent instance from your own application via the Global Data Space. How this is done will be specific to each user application. For example, you can use a gds.config file to connect the BusConductor port to a GDS port in your own C++ project, or you can read and write GDS data by subscribing to the Data Access RSC Service in the PLC. In any case, be sure to include the following logic in your application:
+   ```
+   BusConfig_Outputs.CONFIGURED = BusConfig_Inputs.CONFIGURED;
+   BusConfig_Outputs.RUNNING = BusConfig_Inputs.RUNNING;
+   BusConfig_Outputs.NUM_MODULES = BusConfig_Inputs.NUM_MODULES;
+   ```
+   (This is a work-around for a current limitiation on Component Ports in PLCnext Engineer)
 
 Once the local bus is running, I/O data can be exchanged with a user application in a number of ways. Entries in a gds.config file can be used to connect I/O data to GDS ports in the user application, or the ANSI-C interface can be used to read and write I/O data.
 
 An example of how to use the Data Access RSC Service (for GDS access) and the ANSI-C libraries (for I/O access) are given in the [Sample Runtime](https://github.com/PLCnext/SampleRuntime) example. This sample could be modified to use the BusConductor component to start the Axioline bus, which would eliminate the need to use PLCnext Engineer to generate a different I/O configuration for each specific arrangement of I/O modules.
 
+## Format of user confguration file - /opt/plcnext/projects/BusConductor/config.txt
+
+If provided, this file must contain at least one line. Each line must contain a single integer in base 10 format. There must be no blank lines.
+
+The numbers in the file will be interpreted as follows:
+
+| Line number(s) | Meaning                              |
+|----------------|--------------------------------------|
+| 1              | Total number of I/O modules expected |
+| 2-5            | Device Type for first I/O module     |
+| 6-9            | Device Type for second I/O module    |
+| 10-13          | Device Type for third I/O module     |
+|  :             |              :                       |
+|  :             | Device Type for last I/O module      |
+
+Device Type is specified as a series of 8 bytes, unique for each type of local I/O module.
+These 8 bytes are represented in the config.txt file as 4 x 16 bit integers (in base 10 format) as follows:
+
+| Line number | Device Type bytes          |
+|-------------|----------------------------|
+| x           | MSB = byte 7, LSB = byte 6 |
+| x+1         | MSB = byte 5, LSB = byte 4 |
+| x+2         | MSB = byte 3, LSB = byte 2 |
+| x+3         | MSB = byte 1, LSB = byte 0 |
+
+The Device Type for each type of I/O module can be found in the data sheet for that module.
+
 ## Local bus diagnostics
 
-Once the local I/O bus is running, diagnostics are available from the following standard GDS OUT port variables. These dignostics can be used in decisions to reset the local I/O bus, if and when required.
+Once the local I/O bus is running, diagnostics are available from the following standard GDS OUT port variables.
 
 ### Axioline
+
+A description of each of the variables in the table below is given in the document "UM EN AXL F SYS DIAG", available for download from the Phoenix Contact website.
+
 | Port Name                                | IEC Type   |
 |------------------------------------------|------------|
 | Arp.Io.AxlC/AXIO_DIAG_STATUS_REG_HI      | Bitstring8 |
@@ -167,9 +232,10 @@ Once the local I/O bus is running, diagnostics are available from the following 
 | Arp.Io.AxlC/AXIO_DIAG_PARAM_2_REG_HI     | Bitstring8 |
 | Arp.Io.AxlC/AXIO_DIAG_PARAM_2_REG_LOW    | Bitstring8 |
 
-A description of each of these variables is given in the document "UM EN AXL F SYS DIAG", available for download from the Phoenix Contact website.
-
 ### Inline
+
+A description of each of the variables in the table below is given in the document "IBS SYS DIAG DSC UM E", available for download from the Phoenix Contact website.
+
 | Port Name                                | IEC Type   |
 |------------------------------------------|------------|
 | Arp.Io.IbM/IB_DIAG_STATUS_REG_HI         | Bitstring8 |
@@ -190,7 +256,9 @@ A description of each of these variables is given in the document "UM EN AXL F S
 | Arp.Io.IbM/IB_DIAG_PARAM_2_REG_HI        | Bitstring8 |
 | Arp.Io.IbM/IB_DIAG_PARAM_2_REG_LOW       | Bitstring8 |
 
-A description of each of these variables is given in the document "IBS SYS DIAG DSC UM E", available for download from the Phoenix Contact website.
+## Restarting the local bus
+
+The local bus can be restarted at any time (e.g. if a bus error is detected) by resetting the CONFIG_REQ and START_IO_REQ flags, and then setting them again in sequence. In the case of persistent errors, this restart procedure could be repeated periodically until the error is cleared, or until a maximum number of restart attempts are made. These types of restart procedures will be specific to each application, so it is left to the user to implement this if needed. 
 
 ## Changing the local I/O update rate
 

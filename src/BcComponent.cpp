@@ -1,10 +1,11 @@
 ﻿//
-// Copyright (c) Phoenix Contact GmbH & Co. KG. All rights reserved.
+// Copyright (c) 2019 Phoenix Contact GmbH & Co. KG. All rights reserved.
 // Licensed under the MIT. See LICENSE file in the project root for full license information.
 //
 
 #include "BcComponent.hpp"
 #include "Arp/Plc/Commons/Esm/ProgramComponentBase.hpp"
+#include <fstream>
 
 namespace BusConductor
 {
@@ -75,7 +76,7 @@ void BcComponent::Update()
 		// Set all status information
 		running = false;
 		num_modules = 0;
-		configured = ConfigureLocalIo();
+		configured = ConfigureLocalIo(this->BusConductor.CONFIG_MUST_MATCH, "/opt/plcnext/projects/BusConductor/config.txt");
 	}
 	prevConfigReq = ConfigReq;
 
@@ -101,7 +102,7 @@ void BcComponent::Update()
 	this->BusConductor.NUM_MODULES = num_modules;
 }
 
-bool BcComponent::ConfigureLocalIo()
+bool BcComponent::ConfigureLocalIo(bool validateConfig, string configFile)
 {
     // This sequence is based on PC Worx 6 library "Proficloud_v1_01", POU "AxioBusStartup"
 
@@ -110,7 +111,7 @@ bool BcComponent::ConfigureLocalIo()
     uint16 response;
 
     // Reset driver
-    sendData[0] = 0x1703;  // code
+    sendData[0] = (interbus ? 0x1303 : 0x1703);  // code
     sendData[1] = 0x0000;  // parameter count
 
     receiveData.clear();
@@ -134,6 +135,8 @@ bool BcComponent::ConfigureLocalIo()
     this->log.Info("Done resetting driver.");
 
     // Create configuration
+    // NOTE that this can also be achieved using the helper method "CreateConfiguration" on
+    // the Axio/Interbus MasterService
     sendData[0] = 0x0710;  // code
     sendData[1] = 0x0001;  // parameter count
     sendData[2] = 0x0001;  // frame reference
@@ -158,38 +161,12 @@ bool BcComponent::ConfigureLocalIo()
     }
     this->log.Info("Done creating configuration.");
 
-    // Load process data mapping
-    sendData[0] = 0x0728;  // code
-    sendData[1] = 0x0004;  // parameter count
-    sendData[2] = 0x3000;  // address direction: both IN and OUT
-    sendData[3] = 0x0001;  // communication relationship: 1st via PD RAM IF
-    sendData[4] = 0x0021;  // mode (?)
-    sendData[5] = 0x0000;  // reserved
-
-    receiveData.clear();
-
-    this->log.Info("Loading local I/O process data mapping...");
-
-    if (interbus)
-    {
-        response = this->pInterbusMasterService->InterbusControl(sendData, receiveData);
-    }
-    else
-    {
-        response = this->pAxioMasterService->AxioControl(sendData, receiveData);
-    }
-
-    if (response != 0)
-    {
-        this->log.Error("Load process data mapping failed. Response = {0}", response);
-        return false;
-    }
-    this->log.Info("Done loading process data mapping.");
-
-    // read axioline configuration
+    // read local I/O configuration
+    // NOTE that this can also be achieved using the helper method "ReadConfiguration" on
+    // the Axio/Interbus MasterService
     sendData[0] = 0x030B;  // code
     sendData[1] = 0x0001;  // parameter count
-    sendData[2] = 0x0007;  // attributes: device type, device id and process data length
+    sendData[2] = 0x0003;  // attributes: device type and device id
 
     receiveData.clear();
 
@@ -221,6 +198,54 @@ bool BcComponent::ConfigureLocalIo()
 	}
 
     num_modules =  receiveData[7];
+
+    // Now read the user configuration file, if necessary:
+    if (validateConfig)
+    {
+    	string line;
+    	ifstream f (configFile);
+    	if (!f.is_open())
+    	{
+            this->log.Error("Cannot open file {0}.", configFile);
+            return false;
+    	}
+    	int index = 7;  // index of the first element of receiveData that we are interested in
+    	int expected_lines = num_modules * 4 + 1;  // Expect 4 words per module, plus the length data
+    	int actual_lines = 0;
+    	while(getline(f, line) && actual_lines < expected_lines)
+    	{
+    		line.erase(remove_if(line.begin(), line.end(), ::isspace), line.end());
+			actual_lines++;
+    		if (line.empty())
+    		{
+	            this->log.Error("User configuration file must not contain empty lines, but line {0} is empty.", actual_lines);
+	    		return false;
+    		}
+    		else
+    		{
+    			if (line.compare(to_string(receiveData[index])) != 0)
+				{
+    	            this->log.Error("Line {0} in user configuration file ({1}) does not match actual configuration ({2}).", actual_lines, line, receiveData[index]);
+    	    		return false;
+				}
+				index++;
+    		}
+		}
+    	if (f.bad())
+    	{
+            this->log.Error("Error while reading file {0}.", configFile);
+    		return false;
+    	}
+
+    	// Check that we processed the expected number of lines in the config file
+    	if (actual_lines != expected_lines)
+    	{
+            this->log.Error("Expected {0} entries in user configuration file; found {1}", expected_lines, actual_lines);
+    		return false;
+    	}
+    }
+
+    // If we reach here, all must be OK
     return true;
 }
 
@@ -230,7 +255,30 @@ bool BcComponent::StartLocalIo()
     std::vector<uint16> receiveData;
     uint16 response;
 
+    if (!interbus)
+    {
+        // Load process data mapping
+        sendData[0] = 0x0728;  // code
+        sendData[1] = 0x0004;  // parameter count
+        sendData[2] = 0x3000;  // address direction: both IN and OUT
+        sendData[3] = 0x0001;  // communication relationship: 1st via PD RAM IF
+        sendData[4] = 0x0021;  // mode (?)
+        sendData[5] = 0x0000;  // reserved
+
+        receiveData.clear();
+        this->log.Info("Loading local I/O process data mapping...");
+		response = this->pAxioMasterService->AxioControl(sendData, receiveData);
+        if (response != 0)
+        {
+            this->log.Error("Load process data mapping failed. Response = {0}", response);
+            return false;
+        }
+        this->log.Info("Done loading process data mapping.");
+    }
+
     // start data transfer
+    // NOTE that this can also be achieved using the helper method "StartDataTransfer" on
+    // the Interbus MasterService ... but there is no equivalent on the Axio Master Service ...
     sendData[0] = 0x0701;  // code
     sendData[1] = 0x0001;  // parameter count
     sendData[2] = 0x0001;  // IO Data CR
