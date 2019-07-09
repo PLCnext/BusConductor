@@ -166,7 +166,7 @@ bool BcComponent::ConfigureLocalIo(bool validateConfig, string configFile)
     // the Axio/Interbus MasterService
     sendData[0] = 0x030B;  // code
     sendData[1] = 0x0001;  // parameter count
-    sendData[2] = 0x0003;  // attributes: device type and device id
+    sendData[2] = (interbus ? 0x0002 : 0x0003);  // attributes: interbus - participant code only; axioline - device type and device id
 
     receiveData.clear();
 
@@ -210,7 +210,7 @@ bool BcComponent::ConfigureLocalIo(bool validateConfig, string configFile)
             return false;
     	}
     	int index = 7;  // index of the first element of receiveData that we are interested in
-    	int expected_lines = num_modules * 4 + 1;  // Expect 4 words per module, plus the length data
+    	int expected_lines = (interbus ? num_modules + 1 : num_modules * 4 + 1);  // Axioline: Expect 4 words per module, plus the length data
     	int actual_lines = 0;
     	while(getline(f, line) && actual_lines < expected_lines)
     	{
@@ -280,7 +280,7 @@ bool BcComponent::StartLocalIo()
     // NOTE that this can also be achieved using the helper method "StartDataTransfer" on
     // the Interbus MasterService ... but there is no equivalent on the Axio Master Service ...
     sendData[0] = 0x0701;  // code
-    sendData[1] = 0x0001;  // parameter count
+    sendData[1] = (interbus ? 0x0000 : 0x0001);  // parameter count
     sendData[2] = 0x0001;  // IO Data CR
 
     receiveData.clear();

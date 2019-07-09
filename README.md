@@ -87,12 +87,25 @@ This app is packaged as a PLCnext Engineer Library, but can be used without PLCn
 - [Create a new PLCnext Engineer project](https://youtu.be/I-FeT3p6cGA).
 - Keep the default local bus type (Axioline), or [switch  the local bus type to InLine](https://www.youtube.com/watch?v=5JoVf4q7Hzg&t=166s).
 - Create a generic I/O configuration. In the PLCnext Engineer Components Search box, enter "AXL F physcial" (sic) for Axioline, or "IB IL 256" for Inline. Drag the generic I/O module from the Component library to the Axioline or Inline controller in the Project tree.
-- Create the following user-defined data types:
+- Create the following user-defined data types
+
+   For Axioline I/O: 
    ```
    TYPE
-     ARR_AX_B_1_512 : ARRAY [1..512] OF BYTE;
+     ARR_LOCAL_IO : ARRAY [1..512] OF BYTE;
+   END_TYPE
+   ```
+
+   For Inline I/O:
+   ```
+   TYPE
+     ARR_LOCAL_IO : ARRAY [1..256] OF BYTE;
    END_TYPE
 
+   ```
+
+   For both Axioline and Inline I/O:
+   ```
    TYPE
      BUS_CONDUCTOR       : STRUCT
        CONFIG_REQ        : BOOL;
@@ -104,14 +117,15 @@ This app is packaged as a PLCnext Engineer Library, but can be used without PLCn
      END_STRUCT
    END_TYPE
    ```
+   
 - Create a local IEC program in any language. In the variable table for that program, declare the following variables:
 
-   | Name              | Type           | Usage    |
-   |-------------------|----------------|----------|
-   | Field_Inputs      | ARR_AX_B_1_512 | IN Port  |
-   | Field_Outputs     | ARR_AX_B_1_512 | OUT Port |
-   | BusConfig_Inputs  | BUS_CONDUCTOR  | IN Port  |
-   | BusConfig_Outputs | BUS_CONDUCTOR  | OUT Port |
+   | Name              | Type          | Usage    |
+   |-------------------|---------------|----------|
+   | Field_Inputs      | ARR_LOCAL_IO  | IN Port  |
+   | Field_Outputs     | ARR_LOCAL_IO  | OUT Port |
+   | BusConfig_Inputs  | BUS_CONDUCTOR | IN Port  |
+   | BusConfig_Outputs | BUS_CONDUCTOR | OUT Port |
 
 - In a Code sheet for the local IEC program, add the following logic:
    ```
@@ -185,7 +199,11 @@ An example of how to use the Data Access RSC Service (for GDS access) and the AN
 
 If provided, this file must contain at least one line. Each line must contain a single integer in base 10 format. There must be no blank lines.
 
-The numbers in the file will be interpreted as follows:
+If the format of the `config.txt` file is not correct, or if there are differences between the expected and actual local I/O configurations, then these will be reported in the `Output.log` file in the PLC directory `/opt/plcnext/logs`
+
+The numbers in the configuration file will be interpreted as follows:
+
+### Axioline
 
 | Line number(s) | Meaning                              |
 |----------------|--------------------------------------|
@@ -206,7 +224,45 @@ These 8 bytes are represented in the config.txt file as 4 x 16 bit integers (in 
 | x+2         | MSB = byte 3, LSB = byte 2 |
 | x+3         | MSB = byte 1, LSB = byte 0 |
 
-The Device Type for each type of I/O module can be found in the data sheet for that module.
+The Device Type for each type of I/O module can be found in the data sheet for that module - search for the text "Device Type" or "DeviceType". For example, the data sheet for the Axioline module **AXL F DI8/3 DO8/3 2H** (part number 2702071) shows the device type as follows:
+
+![DeviceType table](images/DeviceType.png "Table showing device type for AXL F DI8/3 DO8/3 2H")
+
+... so for an Axioline bus with a single I/O module of this type, the contents of the `config.txt` file will be:
+
+   ```
+   1
+   192
+   1
+   0
+   3330
+   ```
+
+
+### Inline
+
+| Line number(s) | Meaning                                     |
+|----------------|---------------------------------------------|
+| 1              | Total number of I/O modules expected        |
+| 2              | Length code & ID code for first I/O module  |
+| 3              | Length code & ID code for second I/O module |
+| 4              | Length code & ID code for third I/O module  |
+| :              |              :                              |
+| :              | Length code & ID code for last I/O module   |
+
+Length code & ID code is specified as a 16 bit integer in base 10 format. The most significant byte represents the Length code, and the least significant byte represents the ID code.
+
+The Length code and ID code for each type of I/O module can be found in the data sheet for that module. For example, the data sheet for the Inline module **IB IL 24 DI8/HD-PAC** (part number 2700173) shows the Length code and ID code as follows:
+
+![Length and ID codes table](images/LengthAndIdCodes.png "Table showing Length code and ID code for IB IL 24 DI8/HD-PAC")
+
+... so for an Inline bus with a single I/O module of this type, the contents of the `config.txt` file will be:
+
+   ```
+   1
+   33214
+   ```
+... where 33214 is the decimal representation of 81BE (hex).
 
 ## Local bus diagnostics
 
@@ -256,9 +312,19 @@ A description of each of the variables in the table below is given in the docume
 | Arp.Io.IbM/IB_DIAG_PARAM_2_REG_HI        | Bitstring8 |
 | Arp.Io.IbM/IB_DIAG_PARAM_2_REG_LOW       | Bitstring8 |
 
-## Restarting the local bus
+## Restarting the local bus after error
 
-The local bus can be restarted at any time (e.g. if a bus error is detected) by resetting the CONFIG_REQ and START_IO_REQ flags, and then setting them again in sequence. In the case of persistent errors, this restart procedure could be repeated periodically until the error is cleared, or until a maximum number of restart attempts are made. These types of restart procedures will be specific to each application, so it is left to the user to implement this if needed. 
+### Axioline
+
+If there is an error on the local bus (e.g. missing I/O module), then the Axioline bus will restart automatically when the originally configured I/O module arrangement is detected. This allows for hot-swapping of faulty I/O modules, for example.
+
+### Inline
+
+If there is an error on the local bus (e.g. missing I/O module), then the Inline bus can be restarted by resetting the START_IO_REQ flag, and then setting it again. In the case of persistent errors, this restart procedure could be repeated periodically until the error is cleared, or until a maximum number of restart attempts are made. These types of restart procedures will be specific to each application, so it is left to the user to implement this if needed.
+
+## Dynamically changing the local bus configuration
+
+If the arrangement of I/O modules on the local bus is changed, the user can restart the local bus by resetting the CONFIG_REQ and START_IO_REQ flags, and then setting them again in sequence.
 
 ## Changing the local I/O update rate
 
