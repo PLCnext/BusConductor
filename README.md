@@ -63,7 +63,6 @@ The BusConductor library contains one component, called BcComponent. One instanc
 | CONFIG_MUST_MATCH | boolean  | input     | Local bus configuration must match the user-specified configuration |
 | START_IO_REQ      | boolean  | input     | Request to start local I/O exchange                                 |
 | CONFIGURED        | boolean  | output    | Local bus has been (re-)configured                                  |
-| RUNNING           | boolean  | output    | Local bus is exchanging I/O                                         |
 | NUM_MODULES       | uint16   | output    | Total number of local I/O modules detected                          |
 
 The two REQ commands are processed on a rising edge. They both be set in sequence, and START_IO_REQ will not be processed if CONFIGURED is not TRUE.
@@ -112,7 +111,6 @@ This app is packaged as a PLCnext Engineer Library, but can be used without PLCn
        CONFIG_MUST_MATCH : BOOL;
        START_IO_REQ      : BOOL;
        CONFIGURED        : BOOL;
-       RUNNING           : BOOL;
        NUM_MODULES       : UINT;
      END_STRUCT
    END_TYPE
@@ -130,7 +128,6 @@ This app is packaged as a PLCnext Engineer Library, but can be used without PLCn
 - In a Code sheet for the local IEC program, add the following logic:
    ```
    BusConfig_Outputs.CONFIGURED := BusConfig_Inputs.CONFIGURED;
-   BusConfig_Outputs.RUNNING := BusConfig_Inputs.RUNNING;
    BusConfig_Outputs.NUM_MODULES := BusConfig_Inputs.NUM_MODULES;
    ```
    (This is a work-around for a current limitiation on Component Ports in PLCnext Engineer)
@@ -144,7 +141,6 @@ This app is packaged as a PLCnext Engineer Library, but can be used without PLCn
 - Set the variable `BusConfig_Outputs.CONFIG_REQ` to TRUE.
 - Check that the variable `BusConfig_Inputs.CONFIGURED` goes TRUE, and `BusConfig_Inputs.NUM_MODULES` is set to the total number of I/O modules on the local bus. The local bus is now configured and ready to exchange I/O data.
 - Set the variable `BusConfig_Outputs.START_IO_REQ` to TRUE.
-- Check that the variable `BusConfig_Inputs.RUNNING` goes TRUE. The local bus is now exchanging I/O data with the `Field_Inputs` and `Field_Outputs` variables.
 
 Process Data from each I/O module is now mapped to the `Field_Inputs` and `Field_Outputs` byte arrays. Check the documentation for each I/O module to see how many bytes of process data are provided by that module.
 
@@ -186,7 +182,6 @@ This example describes the use of Axioline I/O. A similar procedure is used to c
 You must now send commands to the BcComponent instance from your own application via the Global Data Space. How this is done will be specific to each user application. For example, you can use a gds.config file to connect the BusConductor port to a GDS port in your own C++ project, or you can read and write GDS data by subscribing to the Data Access RSC Service in the PLC. In any case, be sure to include the following logic in your application:
    ```
    BusConfig_Outputs.CONFIGURED = BusConfig_Inputs.CONFIGURED;
-   BusConfig_Outputs.RUNNING = BusConfig_Inputs.RUNNING;
    BusConfig_Outputs.NUM_MODULES = BusConfig_Inputs.NUM_MODULES;
    ```
    (This is a work-around for a current limitiation on Component Ports in PLCnext Engineer)
