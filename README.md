@@ -183,7 +183,6 @@ This example describes the use of Axioline I/O. A similar procedure is used to c
 You must now send commands to the BcComponent instance from your own application via the Global Data Space. How this is done will be specific to each user application. For example, you can use a gds.config file to connect the BusConductor port to a GDS port in your own C++ project, or you can read and write GDS data by subscribing to the Data Access RSC Service in the PLC. In any case, be sure to include the following logic in your application:
    ```
    BusConfig_Outputs.CONFIGURED = BusConfig_Inputs.CONFIGURED;
-   BusConfig_Outputs.RUNNING = BusConfig_Inputs.RUNNING;
    BusConfig_Outputs.NUM_MODULES = BusConfig_Inputs.NUM_MODULES;
    ```
    (This is a work-around for a current limitiation on Component Ports in PLCnext Engineer)
