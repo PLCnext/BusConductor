@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<TIC xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.phoenixcontact.com/IMA/TIC/1.0/tic.xsd">
+  <E n="PN:C">
+    <AL>
+      <A n="RTClass1">
+        <V>true</V>
+      </A>
+      <A n="RTClass3">
+        <V>false</V>
+      </A>
+    </AL>
+  </E>
+</TIC>
