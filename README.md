@@ -63,7 +63,6 @@ The BusConductor library contains one component, called BcComponent. One instanc
 | CONFIG_MUST_MATCH | boolean  | input     | Local bus configuration must match the user-specified configuration |
 | START_IO_REQ      | boolean  | input     | Request to start local I/O exchange                                 |
 | CONFIGURED        | boolean  | output    | Local bus has been (re-)configured                                  |
-| RUNNING           | boolean  | output    | Local bus is exchanging I/O                                         |
 | NUM_MODULES       | uint16   | output    | Total number of local I/O modules detected                          |
 
 The two REQ commands are processed on a rising edge. They both be set in sequence, and START_IO_REQ will not be processed if CONFIGURED is not TRUE.
@@ -72,7 +71,7 @@ If CONFIG_MUST_MATCH is TRUE, then the user must place a file named `config.txt`
 
 If CONFIG_MUST_MATCH is FALSE, then no configuration checking is done, and a `config.txt` file does not need to be provided.
 
-Output variables from the BusConductor component are latched, and are only reset on a rising edge of the CONFIG_REQ input. Once running, the real-time status of the local I/O bus should be monitored using the diagnostics variables provided by the PLCnext Control (refer to the "Local bus diagnostics" section below).
+The CONFIGURED output variable from the BusConductor component is latched, and is only reset on a rising edge of the CONFIG_REQ input. Once running, the real-time status of the local I/O bus should be monitored using the diagnostics variables provided by the PLCnext Control (refer to the "Local bus diagnostics" section below).
 
 Once the local bus is running, process data can be exchanged with all local I/O modules using the GDS ports "Arp.Io.AxlC/0.DI4096" (inputs) and "Arp.Io.AxlC/0.DO4096" (outputs). Process data from each I/O module will appear in these two arrays in the same order that the modules appear on the local bus. The amount of process data for each I/O module can be obtained from the data sheet for that module.
 
@@ -112,7 +111,6 @@ This app is packaged as a PLCnext Engineer Library, but can be used without PLCn
        CONFIG_MUST_MATCH : BOOL;
        START_IO_REQ      : BOOL;
        CONFIGURED        : BOOL;
-       RUNNING           : BOOL;
        NUM_MODULES       : UINT;
      END_STRUCT
    END_TYPE
@@ -130,7 +128,6 @@ This app is packaged as a PLCnext Engineer Library, but can be used without PLCn
 - In a Code sheet for the local IEC program, add the following logic:
    ```
    BusConfig_Outputs.CONFIGURED := BusConfig_Inputs.CONFIGURED;
-   BusConfig_Outputs.RUNNING := BusConfig_Inputs.RUNNING;
    BusConfig_Outputs.NUM_MODULES := BusConfig_Inputs.NUM_MODULES;
    ```
    (This is a work-around for a current limitiation on Component Ports in PLCnext Engineer)
@@ -144,9 +141,9 @@ This app is packaged as a PLCnext Engineer Library, but can be used without PLCn
 - Set the variable `BusConfig_Outputs.CONFIG_REQ` to TRUE.
 - Check that the variable `BusConfig_Inputs.CONFIGURED` goes TRUE, and `BusConfig_Inputs.NUM_MODULES` is set to the total number of I/O modules on the local bus. The local bus is now configured and ready to exchange I/O data.
 - Set the variable `BusConfig_Outputs.START_IO_REQ` to TRUE.
-- Check that the variable `BusConfig_Inputs.RUNNING` goes TRUE. The local bus is now exchanging I/O data with the `Field_Inputs` and `Field_Outputs` variables.
+- Check that the local bus is running, using the standard diagnostics variables (described below). The local bus is now exchanging I/O data with the `Field_Inputs` and `Field_Outputs` variables.
 
-Process Data from each I/O module is now mapped to the `Field_Inputs` and `Field_Outputs` byte arrays. Check the documentation for each I/O module to see how many bytes of process data are provided by that module.
+Process Data from each I/O module is mapped to the `Field_Inputs` and `Field_Outputs` byte arrays. Check the documentation for each I/O module to see how many bytes of process data are provided by that module.
 
 ### Quick Start without PLCnext Engineer
 

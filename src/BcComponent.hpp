@@ -69,7 +69,6 @@ private: // fields
     // (this is a work-around for the fast that PLCnext Engineer 2019.3
     //  does not handle Component Ports properly).
 	boolean configured = 0;         // Bus is configured
-	boolean running = 0;            // Bus is exchanging I/O data
 	uint16 num_modules = 0;         // Number of I/O modules detected
 
 private:
@@ -99,7 +98,6 @@ public: /* Ports
     	boolean CONFIG_MUST_MATCH = 0;	// Don't start the local bus unless it matches user-defined configuration
     	boolean START_IO_REQ = 0;       // Request start I/O data exchange
     	boolean CONFIGURED = 0;         // Bus is configured
-    	boolean RUNNING = 0;            // Bus is exchanging I/O data
     	uint16 NUM_MODULES = 0;         // Number of I/O modules detected
 //    	uint16 MODULE_DATA[320] = {0};  // Module data (5 words per module, maximum 64 modules)
     } BusConductor;

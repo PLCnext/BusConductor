@@ -74,7 +74,6 @@ void BcComponent::Update()
 	if (ConfigReq && !prevConfigReq)
 	{
 		// Set all status information
-		running = false;
 		num_modules = 0;
 		configured = ConfigureLocalIo(this->BusConductor.CONFIG_MUST_MATCH, "/opt/plcnext/projects/BusConductor/config.txt");
 	}
@@ -91,14 +90,13 @@ void BcComponent::Update()
 		}
 		else
 		{
-			running = StartLocalIo();
+			StartLocalIo();
 		}
 	}
 	prevStartReq = StartReq;
 
 	// Copy all status variables to the Port struct
 	this->BusConductor.CONFIGURED = configured;
-	this->BusConductor.RUNNING = running;
 	this->BusConductor.NUM_MODULES = num_modules;
 }
 
