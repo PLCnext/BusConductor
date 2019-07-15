@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<TIC xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.phoenixcontact.com/IMA/TIC/1.0/tic.xsd">
+  <E n="IB:Device">
+    <AL>
+      <A n="SlotNumber">
+        <V>1</V>
+      </A>
+      <A n="NodeId">
+        <V>0</V>
+      </A>
+      <A n="IdCode">
+        <V>223</V>
+      </A>
+      <A n="PDLengthCode">
+        <V>128</V>
+      </A>
+      <A n="ConfigFrameEntry">
+        <V>00010000FFFF</V>
+      </A>
+    </AL>
+  </E>
+</TIC>
