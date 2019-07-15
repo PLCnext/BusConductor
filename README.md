@@ -157,19 +157,12 @@ This example describes the use of Axioline I/O. A similar procedure is used to c
 - Unzip `BusConductor.pcwlx` using a tool like 7-Zip.
 - Locate the file `libBusConductor.so` in the sub-directory `PROJECT\Logical%20Elements\AXCF2152_19.3.0`. This is the shared object library containing the PLCnext Component that must be instantiated by the Automation Component Framework (ACF).
 - Using WinCSP, copy the shared object library `libBusConductor.so` from the host to the PLC directory `/opt/plcnext/projects/BusConductor`
-- On the PLC, download the ACF configuration file from the Github repository:
-   ```
-   cd /opt/plcnext/projects/BusConductor
-   wget http://github.com/PLCnext/BusConductor/BusConductor.acf.config
-   ```
+- Clone the Github repository and copy the file `BusConductor.acf.config` from the host to the PLC directory `/opt/plcnext/projects/BusConductor`
    The acf.config file instructs the ACF to load the shared object library and create one instance of the BusConductor component.
 - Check that the contents of the acf.config file are correct. For example, the path to the shared object library may need to be updated for your installation. 
-- Download the generic Axioline I/O configuration from Github.
-   ```
-   cd /opt/plcnext/projects/BusConductor
-   wget --recursive --no-parent http://github.com/PLCnext/BusConductor/generic_axioline/
-   ```
-- Change the 'current' symlink to point to the new project directory.
+- Copy the directory `generic_axioline` and all its contents from the host to the PLC directory `/opt/plcnext/projects/BusConductor`
+   This directory contains the generic Axioline bus configuration, including a valid set of TIC files.
+- On the PLC, change the 'current' symlink to point to the new project directory.
    ```
    cd /opt/plcnext/projects
    rm current 
