@@ -8,8 +8,7 @@
 
 | Date       | Version | Authors                     |
 |------------|---------|-----------------------------|
-| 02.07.2019 | 1.0     | Martin Boers                |
-
+| 20.07.2020 | 1.1     | Martin Boers                |
 
 ## Description
 
@@ -21,36 +20,46 @@ This app can be used in any application where the precise I/O configuration is n
 
 1. A PLCnext Control used as a general-purpose RTU, data logger, or multiplexer, where the I/O arrangement must be flexible.
 
-1. A custom PLCnext Control run-time written in any language (e.g. C/C++, rust, node.js, python) which requires flexible local I/O, but which does not want to manipulate .tic files. This can be used by applications like [Sample Runtime](https://github.com/PLCnext/SampleRuntime) so that PLCnext Engineer is no longer required for I/O configuration.
+1. A custom PLCnext Control run-time written in any language (e.g. C/C++, rust, node.js, python) which requires flexible local I/O, but which does not want to manipulate .tic files. This can be used by applications like [Sample Runtime](https://github.com/PLCnext/SampleRuntime) so that PLCnext Engineer or IoConf are no longer required for I/O configuration.
 
-The source code for this app is freely available. Software developers who want to build this type of functionality into their own projects are free to use this app as a reference.
+Software developers who want to build this type of functionality into their own projects are free to use this app as a reference.
 
 Note: The terms "Inline" and "Interbus" are used interchangeably in this document, since the Inline I/O system uses the Interbus communication protocol.
 
+## Alternatives
+
+The C++ code in this project has been ported to IEC-61131 code by Gianluca Riboldi. That solution is described here:
+https://www.plcnext-community.net/en/hn-makers-blog/473-dynamic-axiobus-configuration-totally-iec-61131.html
+
 ## Background
 
-On a PLCnext Control, local I/O can only be accessed through system components that are started as part of the plcnext process. The system components that handle local I/O - either Axioline or Inline - must be configured using TIC ("Technology Independent Configuration") files, which are XML files in a format defined by Phoenix Contact.
+On a PLCnext Control, local I/O can only be accessed via system components that are started as part of the plcnext process. The system components that handle local I/O - either Axioline or Inline - must be configured using TIC ("Technology Independent Configuration") files, which are XML files in a format defined by Phoenix Contact.
 
-Currently the only practical method of generating a valid set of TIC files is by using PLCnext Engineer software, where the arrangement of local I/O modules must be configured manually. In the background, PLCnext Engineer generates TIC files for the specified hardware configuration, which are sent to the PLC with the PLCnext Engineer project.
+Currently the only practical method of generating a valid set of TIC files is by using either PLCnext Engineer or IoConf software, where the arrangement of local I/O modules must be configured manually. Both of these software packages generate TIC files for the specified hardware configuration. In the case of PLCnext Engineer, these TIC files are sent to the PLC with the PLCnext Engineer project.
 
 Once on the PLC, TIC files are read during startup of the plcnext process. TIC files cannot be reloaded while the plcnext process is running.
 
 This application demonstrates how to use a single set of TIC files to configure and re-configure the arrangement of local I/O modules that are connected to a PLC - without the need to manually create different I/O module arrangements in PLCnext Engineer.
 
-## Installation
-
-Download the app from the PLCnext Store and install the "BusConductor" library on the host machine.
-
 ## Building from source
 
-The project can be built using the PLCnext CLI tool, either from the command-line or from Eclipse (with the PLCnext add-in). The SDK for AXC F 2152 firmware version 2019.3 is required. 
+The project can be built using the PLCnext CLI tool, either from the command-line or from Eclipse (with the PLCnext add-in). A suitable SDK for AXC F 1152 or AXC F 2152 is required. The SDK version should match the firmware version on the controller.
+
+Before building, use plcncli to set the project target to match your SDK and controller version. Useful plcncli commands include:
+
+   ```bash
+   plcncli get project-sdks                        # Gets the current target(s)
+   plcncli set target --remove --name axcf2152     # Removes an existing target from the project
+   plcncli set target --add -n axcf2152 -v 2020.6  # Adds a new target to the project
+   ```
 
 When building from the command line, the following commands should be called in sequence from the project root directory:
-   ```
+
+   ```bash
    plcncli generate code
    plcncli generate config
    plcncli build
-   plcncli generate library
+   plcncli deploy
    ```
 
 ## Operation
@@ -59,7 +68,7 @@ The BusConductor library contains one component, called BcComponent. One instanc
 
 | Field name        | C++ Type | Direction | Description                                                         |
 |-------------------|----------|-----------|---------------------------------------------------------------------|
-| CONFIG_REQ        | boolean  | input     | Requst to (re-)configure the local bus                              |
+| CONFIG_REQ        | boolean  | input     | Request to (re-)configure the local bus                              |
 | CONFIG_MUST_MATCH | boolean  | input     | Local bus configuration must match the user-specified configuration |
 | START_IO_REQ      | boolean  | input     | Request to start local I/O exchange                                 |
 | CONFIGURED        | boolean  | output    | Local bus has been (re-)configured                                  |
@@ -75,11 +84,11 @@ The CONFIGURED output variable from the BusConductor component is latched, and i
 
 Once the local bus is running, process data can be exchanged with all local I/O modules using the GDS ports "Arp.Io.AxlC/0.DI4096" (inputs) and "Arp.Io.AxlC/0.DO4096" (outputs). Process data from each I/O module will appear in these two arrays in the same order that the modules appear on the local bus. The amount of process data for each I/O module can be obtained from the data sheet for that module.
 
-Note that this app starts all I/O modules using the configuration that is stored in the module. Any changes to module-specific configuration (e.g. analog output channel configuration) must be done separately, using (for example) the `PDI_WRITE` function block in the PLCnext Controller library, or the Acyclic Communication RSC service, or the [Startup+](http://www.phoenixcontact.net/product/2700636) configuration tool.
+Note that this app starts all I/O modules using the configuration that is stored in the module. Any changes to module-specific configuration (e.g. analog output channel configuration) must be done separately, using (for example) the `PDI_WRITE` function block in the PLCnext Controller library, or the Acyclic Communication RSC service.
 
 ## Quick start
 
-This app is packaged as a PLCnext Engineer Library, but can be used without PLCnext Engineer. This quick-start covers both cases. Use of this app without PLCnext Engineer requires advanced knowledge of file-based configuration and operation of PLCnext Control components.
+This app can be built as a PLCnext Engineer Library, but can be used without PLCnext Engineer. This quick-start covers both cases. Use of this app without PLCnext Engineer requires advanced knowledge of [file-based configuration](http://plcnext-infocenter.s3-website.eu-central-1.amazonaws.com/PLCnext_Technology_InfoCenter/PLCnext_Technology_InfoCenter/PLCnext_Runtime/Configuration_files.htm) and operation of PLCnext Control components.
 
 ### Quick Start using PLCnext Engineer
 
@@ -88,15 +97,17 @@ This app is packaged as a PLCnext Engineer Library, but can be used without PLCn
 - Create a generic I/O configuration. In the PLCnext Engineer Components Search box, enter "AXL F physcial" (sic) for Axioline, or "IB IL 256" for Inline. Drag the generic I/O module from the Component library to the Axioline or Inline controller in the Project tree.
 - Create the following user-defined data types
 
-   For Axioline I/O: 
-   ```
+   For Axioline I/O:
+
+   ```text
    TYPE
      ARR_LOCAL_IO : ARRAY [1..512] OF BYTE;
    END_TYPE
    ```
 
    For Inline I/O:
-   ```
+
+   ```text
    TYPE
      ARR_LOCAL_IO : ARRAY [1..256] OF BYTE;
    END_TYPE
@@ -104,7 +115,8 @@ This app is packaged as a PLCnext Engineer Library, but can be used without PLCn
    ```
 
    For both Axioline and Inline I/O:
-   ```
+
+   ```text
    TYPE
      BUS_CONDUCTOR       : STRUCT
        CONFIG_REQ        : BOOL;
@@ -115,7 +127,7 @@ This app is packaged as a PLCnext Engineer Library, but can be used without PLCn
      END_STRUCT
    END_TYPE
    ```
-   
+
 - Create a local IEC program in any language. In the variable table for that program, declare the following variables:
 
    | Name              | Type          | Usage    |
@@ -126,13 +138,16 @@ This app is packaged as a PLCnext Engineer Library, but can be used without PLCn
    | BusConfig_Outputs | BUS_CONDUCTOR | OUT Port |
 
 - In a Code sheet for the local IEC program, add the following logic:
-   ```
+
+   ```text
    BusConfig_Outputs.CONFIGURED := BusConfig_Inputs.CONFIGURED;
    BusConfig_Outputs.NUM_MODULES := BusConfig_Inputs.NUM_MODULES;
    ```
-   (This is a work-around for a current limitiation on Component Ports in PLCnext Engineer)
+
+   (This is a work-around for a current limitation on Component Ports in PLCnext Engineer)
+
 - Create one instance of the local IEC program in a PLCnext Task.
-- In the PLCnext Port List, connect the `Field_Inputs` and `Field_Outputs` to the `DO4096` and `DI4096` ports on the generic I/O module.
+- In the PLCnext Port List, connect the `Field_Inputs` and `Field_Outputs` to the `DO4096` and `DI4096` ports on the generic Axioline I/O module, or the `DO2048` and `DI2048` ports on the generic Inline I/O module.
 - Add the BusConductor user library to the PLCnext Engineer project.
 - Create one instance of the `BcProgram` program (from the BusConductor library) in a PLCnext Task.
 - In the PLCnext Port List, connect the ports `BusConfig_Inputs` and `BusConfig_Outputs` to the `BusConductor` port on `BcComponent1`.
@@ -148,43 +163,43 @@ Process Data from each I/O module is mapped to the `Field_Inputs` and `Field_Out
 ### Quick Start without PLCnext Engineer
 
 This example describes the use of Axioline I/O. A similar procedure is used to configure Inline I/O.
+
 - Using PuTTY on the host machine, log in to the PLC as admin.
 - On the PLC, create a new directory for this project, e.g.
-   ```
+
+   ```text
    mkdir /opt/plcnext/projects/BusConductor
    ```
+
 - On the host machine, locate the file `BusConductor.pcwlx` that was installed with the app.
 - Unzip `BusConductor.pcwlx` using a tool like 7-Zip.
 - Locate the file `libBusConductor.so` in the sub-directory `PROJECT\Logical%20Elements\AXCF2152_19.3.0`. This is the shared object library containing the PLCnext Component that must be instantiated by the Automation Component Framework (ACF).
 - Using WinCSP, copy the shared object library `libBusConductor.so` from the host to the PLC directory `/opt/plcnext/projects/BusConductor`
-- On the PLC, download the ACF configuration file from the Github repository:
-   ```
-   cd /opt/plcnext/projects/BusConductor
-   wget http://github.com/PLCnext/BusConductor/BusConductor.acf.config
-   ```
+- Clone the Github repository and copy the file `BusConductor.acf.config` from the host to the PLC directory `/opt/plcnext/projects/BusConductor`
    The acf.config file instructs the ACF to load the shared object library and create one instance of the BusConductor component.
 - Check that the contents of the acf.config file are correct. For example, the path to the shared object library may need to be updated for your installation. 
-- Download the generic Axioline I/O configuration from Github.
-   ```
-   cd /opt/plcnext/projects/BusConductor
-   wget --recursive --no-parent http://github.com/PLCnext/BusConductor/generic_axioline/
-   ```
-- Change the 'current' symlink to point to the new project directory.
-   ```
+- Copy the directory `generic_axioline` and all its contents from the host to the PLC directory `/opt/plcnext/projects/BusConductor`
+   This directory contains the generic Axioline bus configuration, including a valid set of TIC files.
+- On the PLC, change the 'current' symlink to point to the new project directory.
+
+   ```text
    cd /opt/plcnext/projects
-   rm current 
+   rm current
    ln -s BusConductor current
    ```
+
     This tells the PLCnext Control to use this as the default project, which will load the acf.config file and generic I/O configuration from this directory.
 
 - Restart the PLCnext runtime to create the BusConductor component.
 - If using the acf.config file in this example, the name of the BusConductor port in the Global Data Space will be "BcComponent1/BusConductor"
 
 You must now send commands to the BcComponent instance from your own application via the Global Data Space. How this is done will be specific to each user application. For example, you can use a gds.config file to connect the BusConductor port to a GDS port in your own C++ project, or you can read and write GDS data by subscribing to the Data Access RSC Service in the PLC. In any case, be sure to include the following logic in your application:
-   ```
+
+   ```text
    BusConfig_Outputs.CONFIGURED = BusConfig_Inputs.CONFIGURED;
    BusConfig_Outputs.NUM_MODULES = BusConfig_Inputs.NUM_MODULES;
    ```
+
    (This is a work-around for a current limitiation on Component Ports in PLCnext Engineer)
 
 Once the local bus is running, I/O data can be exchanged with a user application in a number of ways. Entries in a gds.config file can be used to connect I/O data to GDS ports in the user application, or the ANSI-C interface can be used to read and write I/O data.
@@ -226,14 +241,13 @@ The Device Type for each type of I/O module can be found in the data sheet for t
 
 ... so for an Axioline bus with a single I/O module of this type, the contents of the `config.txt` file will be:
 
-   ```
+   ```text
    1
    192
    1
    0
    3330
    ```
-
 
 ### Inline
 
@@ -254,10 +268,11 @@ The Length code and ID code for each type of I/O module can be found in the data
 
 ... so for an Inline bus with a single I/O module of this type, the contents of the `config.txt` file will be:
 
-   ```
+   ```text
    1
    33214
    ```
+
 ... where 33214 is the decimal representation of 81BE (hex).
 
 ## Local bus diagnostics
@@ -324,13 +339,13 @@ If the arrangement of I/O modules on the local bus is changed, the user can rest
 
 ## Changing the local I/O update rate
 
-By default, I/O data is exhanged with local I/O modules every 50 ms. This can be changed, if required, using either PLCnext Engineer or (for applications that do not use PLCnext Engineer) by editing configuration files directly on the PLC:
+By default, I/O data is exhanged with local I/O modules every 500 µs. This can be changed, if required, using either PLCnext Engineer or (for applications that do not use PLCnext Engineer) by editing configuration files directly on the PLC:
 
 ### Using PLCnext Engineer
 
 - In PLCnext Engineer, double-click on the local I/O bus controller (e.g. "Axioline F") in the Project pane, click on the Settings tab, and select the "Update task" menu item.
 - Select a task from the drop-down list. Data will be exchanged with local I/O modules every time this task is executed.
-- If no task is selected, the I/O update rate defaults to 50 ms.
+- If no task is selected, the I/O update rate defaults to 500 µs.
 
 ### Without PLCnext Engineer
 
@@ -341,24 +356,22 @@ By default, I/O data is exhanged with local I/O modules every 50 ms. This can be
 ## Troubleshooting
 
 If the BusConductor component appears not to be working, check the contents of the file `/opt/plcnext/logs/Output.log`, and look for entries from the component `BusConductor.BcComponent`. This can be done with the following command:
-```
+
+```bash
 cat /opt/plcnext/logs/Output.log | grep BusConductor.BcComponent
 ```
 
 ## How to get support
+
 This app is supported in the forum of the [PLCnext Community](https://www.plcnext-community.net/index.php?option=com_easydiscuss&view=categories&Itemid=221&lang=en).
 Please raise an issue with a detailed error description and always provide a copy of the Output.log file.
 
 ## Design notes
 
-- This project was developed entirely in Eclipse, using the PLCnext CLI project template and the configuration/build process provided by the PLCnext Add-In for Eclipse. The current version of the PLCnext CLI (2019.0) provides limited support for the Component Ports feature of the PLCnext Control firmware, and more Component Port features could be utilised by moving away from the PLCnext CLI project template and build process.
-
-- This app is designed to be used in PLCnext Engineer, but also be useable by other C++ components. Note that the current version of PLCnext Engineer (2019.3) provides limited support for the "Component Ports" feature of the PLCnext Control firmware, and no support for component-only libraries. This project includes some features that work around these limitiations - for example, the only purpose of the program `BcProgram` in the BusConductor library is to force PLCnext Engineer to instantiate `BcComponent`, which would otherwise not be instantiated by PLCnext Engineer.
-
-- For software developers who would like to reproduce the functions of this app in their own IEC 61131 (PLCnext Engineer) project, use the `AX_CONTROL` and/or `IB_CONTROL_NEXT` function blocks to access the Axioline Master and Interbus Master RSC services respectively. These FBs are included in the PLCnext Controller library that comes with PLCnext Engineer.
+- This app is designed to be used in PLCnext Engineer, but also be useable by other C++ components. Note that the current version of PLCnext Engineer (2020.6) provides limited support for the "Component Ports" feature of the PLCnext Control firmware, and no support for component-only libraries. This project includes some features that work around these limitiations - for example, the only purpose of the program `BcProgram` in the BusConductor library is to force PLCnext Engineer to instantiate `BcComponent`, which would otherwise not be instantiated by PLCnext Engineer.
 
 -----------
 
-Copyright © 2019 Phoenix Contact Electronics GmbH
+Copyright © 2019-2020 Phoenix Contact Electronics GmbH
 
 All rights reserved. This program and the accompanying materials are made available under the terms of the [MIT License](http://opensource.org/licenses/MIT) which accompanies this distribution.
