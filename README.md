@@ -339,19 +339,27 @@ If the arrangement of I/O modules on the local bus is changed, the user can rest
 
 ## Changing the local I/O update rate
 
-By default, I/O data is exhanged with local I/O modules every 500 µs. This can be changed, if required, using either PLCnext Engineer or (for applications that do not use PLCnext Engineer) by editing configuration files directly on the PLC:
+By default, I/O data is exchanged with local I/O modules every 500 µs. This can be changed, if required, using either PLCnext Engineer or (for applications that do not use PLCnext Engineer) by editing configuration files directly on the PLC:
 
 ### Using PLCnext Engineer
 
-- In PLCnext Engineer, double-click on the local I/O bus controller (e.g. "Axioline F") in the Project pane, click on the Settings tab, and select the "Update task" menu item.
-- Select a task from the drop-down list. Data will be exchanged with local I/O modules every time this task is executed.
-- If no task is selected, the I/O update rate defaults to 500 µs.
+- In PLCnext Engineer, double-click on the local I/O bus controller (e.g. "Axioline F") in the Project pane, click on the Settings tab, and select the "Trigger task" menu item.
+- Select a cyclic task from the drop-down list. Data will be exchanged with local I/O modules every time this task is executed.
+- If no cyclic task is selected, the I/O update rate is calculated by the PLCnext Runtime.
+- If no cyclic tasks are defined on any ESM, I/O data is exchanged with local I/O modules every 500 µs.
 
 ### Without PLCnext Engineer
 
-- In the esm.config file for your project, define a task that will be used to trigger local I/O updates.
-- On the PLC, open the following file in an editor: `/opt/plcnext/projects/Default/Plc/Esm/Axio.esm.config`
-- In this file, change the `taskName` in the `TaskEvent` entries from "Globals" to the name of your I/O update task.
+- In the esm.config file for your project, define a cyclic task that will be used to trigger local I/O updates.
+- Associate this task with an ESM.
+- Add the following section to the .esm.config file:
+
+   ```txt
+     <TaskEvents>
+       <TaskEvent name="Arp.Io.AxlC.OnExecuting" taskName="YourTask" event="Executing" />
+       <TaskEvent name="Arp.Io.AxlC.OnExecuted" taskName="YourTask" event="Executed" />
+     </TaskEvents>
+   ```
 
 ## Troubleshooting
 
