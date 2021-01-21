@@ -63,41 +63,41 @@ void BcComponent::ResetConfig()
 
     // implement this inverse to SetupConfig() and LoadConfig()
 
-	this->updateThread.Stop();
+    this->updateThread.Stop();
 
 }
 
 void BcComponent::Update()
 {
-	// Check for configuration request
-	boolean ConfigReq = this->BusConductor.CONFIG_REQ;
-	if (ConfigReq && !prevConfigReq)
-	{
-		// Set all status information
-		num_modules = 0;
-		configured = ConfigureLocalIo(this->BusConductor.CONFIG_MUST_MATCH, "/opt/plcnext/projects/BusConductor/config.txt");
-	}
-	prevConfigReq = ConfigReq;
+    // Check for configuration request
+    boolean ConfigReq = this->BusConductor.CONFIG_REQ;
+    if (ConfigReq && !prevConfigReq)
+    {
+        // Set all status information
+        num_modules = 0;
+        configured = ConfigureLocalIo(this->BusConductor.CONFIG_MUST_MATCH, "/opt/plcnext/projects/BusConductor/config.txt");
+    }
+    prevConfigReq = ConfigReq;
 
-	// Check for start request
-	boolean StartReq = this->BusConductor.START_IO_REQ;
-	if (StartReq && !prevStartReq)
-	{
-		// Check current status
-		if (!configured)
-		{
-		    this->log.Warning("Please configure local I/O before attempting to start the bus.");
-		}
-		else
-		{
-			StartLocalIo();
-		}
-	}
-	prevStartReq = StartReq;
+    // Check for start request
+    boolean StartReq = this->BusConductor.START_IO_REQ;
+    if (StartReq && !prevStartReq)
+    {
+        // Check current status
+        if (!configured)
+        {
+            this->log.Warning("Please configure local I/O before attempting to start the bus.");
+        }
+        else
+        {
+            StartLocalIo();
+        }
+    }
+    prevStartReq = StartReq;
 
-	// Copy all status variables to the Port struct
-	this->BusConductor.CONFIGURED = configured;
-	this->BusConductor.NUM_MODULES = num_modules;
+    // Copy all status variables to the Port struct
+    this->BusConductor.CONFIGURED = configured;
+    this->BusConductor.NUM_MODULES = num_modules;
 }
 
 bool BcComponent::ConfigureLocalIo(bool validateConfig, string configFile)
@@ -131,6 +131,52 @@ bool BcComponent::ConfigureLocalIo(bool validateConfig, string configFile)
         return false;
     }
     this->log.Info("Done resetting driver.");
+
+    // Do an initial check of the user configuration file, if necessary.
+    // At this stage the file is only checked for a "zero" configuration,
+    // because then we can skip all the remaining configuration steps.
+    if (validateConfig)
+    {
+        string line;
+        ifstream f (configFile);
+        if (!f.is_open())
+        {
+            this->log.Error("Cannot open file {0}.", configFile);
+            return false;
+        }
+        
+        if(getline(f, line))
+        {
+            line.erase(remove_if(line.begin(), line.end(), ::isspace), line.end());
+            if (line.empty())
+            {
+                this->log.Error("User configuration file {0} must not contain empty lines, but line 1 is empty.", configFile);
+                return false;
+            }
+            else
+            {
+                if (line.compare("0") == 0)
+                {
+                    // At this point, the configuration file indicates that no I/O modules
+                    // are connected, so the configuration sequence will stop here.
+                    // If there really are I/O modules connected, they will be ignored.
+                    num_modules = 0;
+                    return true;
+                }
+            }
+        }
+        else
+        {
+            this->log.Error("Could not read first line of user configuration file {0}.", configFile);
+            return false;
+        }
+
+        if (f.bad())
+        {
+            this->log.Error("Error while reading file {0}.", configFile);
+            return false;
+        }
+    }
 
     // Create configuration
     // NOTE that this can also be achieved using the helper method "CreateConfiguration" on
@@ -190,57 +236,57 @@ bool BcComponent::ConfigureLocalIo(bool validateConfig, string configFile)
     // TODO: Check the "More Follows" word (receiveData[3]), and handle the situation where
     // there are more I/O modules than can fit in one message.
     if (receiveData.size() < 8)
-	{
+    {
         this->log.Error("Read local I/O configuration failed. Response message too short.");
-		return false;
-	}
+        return false;
+    }
 
     num_modules =  receiveData[7];
 
     // Now read the user configuration file, if necessary:
     if (validateConfig)
     {
-    	string line;
-    	ifstream f (configFile);
-    	if (!f.is_open())
-    	{
+        string line;
+        ifstream f (configFile);
+        if (!f.is_open())
+        {
             this->log.Error("Cannot open file {0}.", configFile);
             return false;
-    	}
-    	int index = 7;  // index of the first element of receiveData that we are interested in
-    	int expected_lines = (interbus ? num_modules + 1 : num_modules * 4 + 1);  // Axioline: Expect 4 words per module, plus the length data
-    	int actual_lines = 0;
-    	while(getline(f, line) && actual_lines < expected_lines)
-    	{
-    		line.erase(remove_if(line.begin(), line.end(), ::isspace), line.end());
-			actual_lines++;
-    		if (line.empty())
-    		{
-	            this->log.Error("User configuration file must not contain empty lines, but line {0} is empty.", actual_lines);
-	    		return false;
-    		}
-    		else
-    		{
-    			if (line.compare(to_string(receiveData[index])) != 0)
-				{
-    	            this->log.Error("Line {0} in user configuration file ({1}) does not match actual configuration ({2}).", actual_lines, line, receiveData[index]);
-    	    		return false;
-				}
-				index++;
-    		}
-		}
-    	if (f.bad())
-    	{
+        }
+        int index = 7;  // index of the first element of receiveData that we are interested in
+        int expected_lines = (interbus ? num_modules + 1 : num_modules * 4 + 1);  // Axioline: Expect 4 words per module, plus the length data
+        int actual_lines = 0;
+        while(getline(f, line) && actual_lines < expected_lines)
+        {
+            line.erase(remove_if(line.begin(), line.end(), ::isspace), line.end());
+            actual_lines++;
+            if (line.empty())
+            {
+                this->log.Error("User configuration file must not contain empty lines, but line {0} is empty.", actual_lines);
+                return false;
+            }
+            else
+            {
+                if (line.compare(to_string(receiveData[index])) != 0)
+                {
+                    this->log.Error("Line {0} in user configuration file ({1}) does not match actual configuration ({2}).", actual_lines, line, receiveData[index]);
+                    return false;
+                }
+                index++;
+            }
+        }
+        if (f.bad())
+        {
             this->log.Error("Error while reading file {0}.", configFile);
-    		return false;
-    	}
+            return false;
+        }
 
-    	// Check that we processed the expected number of lines in the config file
-    	if (actual_lines != expected_lines)
-    	{
+        // Check that we processed the expected number of lines in the config file
+        if (actual_lines != expected_lines)
+        {
             this->log.Error("Expected {0} entries in user configuration file; found {1}", expected_lines, actual_lines);
-    		return false;
-    	}
+            return false;
+        }
     }
 
     // If we reach here, all must be OK
@@ -265,7 +311,7 @@ bool BcComponent::StartLocalIo()
 
         receiveData.clear();
         this->log.Info("Loading local I/O process data mapping...");
-		response = this->pAxioMasterService->AxioControl(sendData, receiveData);
+        response = this->pAxioMasterService->AxioControl(sendData, receiveData);
         if (response != 0)
         {
             this->log.Error("Load process data mapping failed. Response = {0}", response);
