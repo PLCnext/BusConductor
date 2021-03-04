@@ -8,7 +8,7 @@
 
 | Date       | Version | Authors                     |
 |------------|---------|-----------------------------|
-| 20.07.2020 | 1.1     | Martin Boers                |
+| 04.03.2021 | 1.2     | Martin Boers                |
 
 ## Description
 
