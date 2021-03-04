@@ -327,7 +327,7 @@ A description of each of the variables in the table below is given in the docume
 
 ### Axioline
 
-If there is an error on the local bus (e.g. missing I/O module), then the Axioline bus will restart automatically when the originally configured I/O module arrangement is detected. This allows for hot-swapping of faulty I/O modules, for example.
+If there is an error on the local bus (e.g. missing I/O module), then the Axioline bus will restart automatically when the originally configured I/O module arrangement is detected. This feature could be used, for example, to replace a faulty I/O module without powering down the PLC. In this case, however, the faulty I/O module will still need to be powered off if it does not support hot-swapping.
 
 ### Inline
 
