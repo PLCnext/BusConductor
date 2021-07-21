@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<MetaConfigurationDocument xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" schemaVersion="2.0" xmlns="http://www.phoenixcontact.com/schema/metaconfig">
+  <Types>
+    <Struct type="BUS_CONDUCTOR">
+      <Fields>
+		<Field name="CONFIG_REQ" type="boolean" attributes="" dimensions="" />
+		<Field name="CONFIG_MUST_MATCH" type="boolean" attributes="" dimensions="" />
+		<Field name="START_IO_REQ" type="boolean" attributes="" dimensions="" />
+		<Field name="CONFIGURED" type="boolean" attributes="" dimensions="" />
+		<Field name="NUM_MODULES" type="uint16" attributes="" dimensions="" />
+      </Fields>
+    </Struct>
+  </Types>
+</MetaConfigurationDocument>
