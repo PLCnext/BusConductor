@@ -8,7 +8,7 @@
 
 | Date       | Version | Authors                     |
 |------------|---------|-----------------------------|
-| 21.07.2021 | 1.3     | Martin Boers                |
+| 22.07.2021 | 1.4     | Martin Boers                |
 
 ## Description
 
@@ -74,7 +74,7 @@ The BusConductor library contains one component, called BcComponent. One instanc
 | CONFIGURED        | boolean  | output    | Local bus has been (re-)configured                                  |
 | NUM_MODULES       | uint16   | output    | Total number of local I/O modules detected                          |
 
-The two REQ commands are processed on a rising edge. They both be set in sequence, and START_IO_REQ will not be processed if CONFIGURED is not TRUE.
+The two REQ commands are processed on a rising edge. They should both be set in sequence, and START_IO_REQ will not be processed if CONFIGURED is not TRUE.
 
 If CONFIG_MUST_MATCH is TRUE, then the user must place a file named `config.txt` in the PLC directory `/opt/plcnext/projects/BusConductor`. This file contains the expected local I/O module arrangement, and is checked (if necessary) during the processing of the CONFIG_REQ command. If there is any mis-match detected between the contents of this file and the actual local I/O configuration, then CONFIGURED will remain FALSE, and the bus cannot be started. In this case, check the Output.log file on the PLC for error messages.
 
