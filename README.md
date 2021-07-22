@@ -266,6 +266,7 @@ The Device Type for each type of I/O module can be found in the data sheet for t
    3330
    ```
 
+If operation without I/O modules is required, then the first line of the `config.txt` file should contain the number `0`. In this case, differences between the expected and actual local I/O configurations will **not** be checked, and any connected I/O modules will not be accessible.
 ### Inline
 
 | Line number(s) | Meaning                                     |
