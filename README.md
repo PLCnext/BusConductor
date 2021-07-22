@@ -8,21 +8,21 @@
 
 | Date       | Version | Authors                     |
 |------------|---------|-----------------------------|
-| 21.01.2021 | 1.2     | Martin Boers                |
+| 21.07.2021 | 1.3     | Martin Boers                |
 
 ## Description
 
-This app can be used to configure a local PLCnext Control I/O bus, containing either Axioline or Inline I/O modules, without the need to hard-code the specific I/O configuration either directly in .tic files, or indirectly using PLCnext Engineer.
+This application can be used to configure a local PLCnext Control I/O bus, containing either Axioline or Inline I/O modules, without the need to hard-code the specific I/O configuration either directly in .tic files, or indirectly using PLCnext Engineer.
 
-This app can be used in any application where the precise I/O configuration is not known at design-time, or must be changed dynamically at run-time. Examples include:
+This may be useful in applications where the precise I/O configuration is not known at design-time, or must be changed dynamically at run-time. Examples include:
 
 1. A machine builder who uses a single PLCnext Engineer project for multiple machine configurations, where the PLC program dynamically adapts itself based on the arrangement of local I/O modules detected.
 
-1. A PLCnext Control used as a general-purpose RTU, data logger, or multiplexer, where the I/O arrangement must be flexible.
+1. A PLCnext Control device used as a general-purpose RTU, data logger, or multiplexer, where the I/O arrangement must be flexible.
 
 1. A custom PLCnext Control run-time written in any language (e.g. C/C++, rust, node.js, python) which requires flexible local I/O, but which does not want to manipulate .tic files. This can be used by applications like [Sample Runtime](https://github.com/PLCnext/SampleRuntime) so that PLCnext Engineer or IoConf are no longer required for I/O configuration.
 
-Software developers who want to build this type of functionality into their own projects are free to use this app as a reference.
+Software developers who want to build this type of functionality into their own projects are free to use this application as a reference.
 
 Note: The terms "Inline" and "Interbus" are used interchangeably in this document, since the Inline I/O system uses the Interbus communication protocol.
 
@@ -33,7 +33,7 @@ https://www.plcnext-community.net/en/hn-makers-blog/473-dynamic-axiobus-configur
 
 ## Background
 
-On a PLCnext Control, local I/O can only be accessed via system components that are started as part of the plcnext process. The system components that handle local I/O - either Axioline or Inline - must be configured using TIC ("Technology Independent Configuration") files, which are XML files in a format defined by Phoenix Contact.
+On a PLCnext Control device, local I/O can only be accessed via system components that are started as part of the plcnext process. The system components that handle local I/O - either Axioline or Inline - must be configured using TIC ("Technology Independent Configuration") files, which are XML files in a format defined by Phoenix Contact.
 
 Currently the only practical method of generating a valid set of TIC files is by using either PLCnext Engineer or IoConf software, where the arrangement of local I/O modules must be configured manually. Both of these software packages generate TIC files for the specified hardware configuration. In the case of PLCnext Engineer, these TIC files are sent to the PLC with the PLCnext Engineer project.
 
@@ -50,7 +50,7 @@ Before building, use plcncli to set the project target to match your SDK and con
    ```bash
    plcncli get project-sdks                        # Gets the current target(s)
    plcncli set target --remove --name axcf2152     # Removes an existing target from the project
-   plcncli set target --add -n axcf2152 -v 2020.6  # Adds a new target to the project
+   plcncli set target --add -n axcf2152 -v 2021.6  # Adds a new target to the project
    ```
 
 When building from the command line, the following commands should be called in sequence from the project root directory:
@@ -80,7 +80,7 @@ If CONFIG_MUST_MATCH is TRUE, then the user must place a file named `config.txt`
 
 If CONFIG_MUST_MATCH is FALSE, then no configuration checking is done, and a `config.txt` file does not need to be provided.
 
-The CONFIGURED output variable from the BusConductor component is latched, and is only reset on a rising edge of the CONFIG_REQ input. Once running, the real-time status of the local I/O bus should be monitored using the diagnostics variables provided by the PLCnext Control (refer to the "Local bus diagnostics" section below).
+The CONFIGURED output variable from the BusConductor component is latched, and is only reset on a rising edge of the CONFIG_REQ input. Once running, the real-time status of the local I/O bus should be monitored using the diagnostics variables provided by the PLCnext Control device (refer to the "Local bus diagnostics" section below).
 
 Once the local bus is running, process data can be exchanged with all local I/O modules using the GDS ports "Arp.Io.AxlC/0.DI4096" (inputs) and "Arp.Io.AxlC/0.DO4096" (outputs). Process data from each I/O module will appear in these two arrays in the same order that the modules appear on the local bus. The amount of process data for each I/O module can be obtained from the data sheet for that module.
 
@@ -88,7 +88,7 @@ Note that this app starts all I/O modules using the configuration that is stored
 
 ## Quick start
 
-This app can be built as a PLCnext Engineer Library, but can be used without PLCnext Engineer. This quick-start covers both cases. Use of this app without PLCnext Engineer requires advanced knowledge of [file-based configuration](http://plcnext-infocenter.s3-website.eu-central-1.amazonaws.com/PLCnext_Technology_InfoCenter/PLCnext_Technology_InfoCenter/PLCnext_Runtime/Configuration_files.htm) and operation of PLCnext Control components.
+This app can be built as a PLCnext Engineer Library, but can be used without PLCnext Engineer. This quick-start covers both cases. Use of this app without PLCnext Engineer requires advanced knowledge of [file-based configuration](https://www.plcnext.help/te/PLCnext_Runtime/Configuration_files.htm) and operation of PLCnext Control programs.
 
 ### Quick Start using PLCnext Engineer
 
@@ -164,22 +164,39 @@ Process Data from each I/O module is mapped to the `Field_Inputs` and `Field_Out
 
 This example describes the use of Axioline I/O. A similar procedure is used to configure Inline I/O.
 
-- Using PuTTY on the host machine, log in to the PLC as admin.
+Installing this application without PLCnext Engineer requires advanced knowledge of [file-based configuration](https://github.com/PLCnext/CppExamples/blob/master/Examples/NoEngineer/README.MD) and operation of PLCnext Control programs.
+
+Procedure:
+
+- Clone the Github repository and build the application from source, using the instructions above.
+- Using `ssh` on the host machine, log in to the PLC as admin.
 - On the PLC, create a new directory for this project, e.g.
 
    ```text
    mkdir /opt/plcnext/projects/BusConductor
    ```
 
-- On the host machine, locate the file `BusConductor.pcwlx` that was installed with the app.
-- Unzip `BusConductor.pcwlx` using a tool like 7-Zip.
-- Locate the file `libBusConductor.so` in the sub-directory `PROJECT\Logical%20Elements\AXCF2152_19.3.0`. This is the shared object library containing the PLCnext Component that must be instantiated by the Automation Component Framework (ACF).
-- Using WinCSP, copy the shared object library `libBusConductor.so` from the host to the PLC directory `/opt/plcnext/projects/BusConductor`
-- Clone the Github repository and copy the file `BusConductor.acf.config` from the host to the PLC directory `/opt/plcnext/projects/BusConductor`
-   The acf.config file instructs the ACF to load the shared object library and create one instance of the BusConductor component.
-- Check that the contents of the acf.config file are correct. For example, the path to the shared object library may need to be updated for your installation. 
-- Copy the directory `generic_axioline` and all its contents from the host to the PLC directory `/opt/plcnext/projects/BusConductor`
+- Copy the contents of the `generic_axioline` directory from the host to the PLC directory `/opt/plcnext/projects/BusConductor`, e.g.
+
+   ```text
+   cd generic_axioline
+   scp -r * admin@192.168.1.10:~/projects/BusConductor
+   ```
+
    This directory contains the generic Axioline bus configuration, including a valid set of TIC files.
+
+- Using a procedure similar to the one described in the [CppExamples repository](https://github.com/PLCnext/CppExamples/blob/master/Examples/NoEngineer/README.MD), add the following application files to the correct sub-directories on the PLC:
+   - `libBusConductor.so` and all the associated meta configuration files.
+   - A PLM configuration file, to load the BusConductor program library.
+   - An ESM configuration file, to create an ESM task and an instance of the BusConductor program.
+
+   <br/>Examples of these files, including the correct directory structure, are contained in the `no_engineer` directory in this repository. The contents of this directory can be copied to the PLC directory `/opt/plcnext/projects/BusConductor`, replacing any files with the same name that were copied from the `generic_axioline` directory. e.g.
+
+   ```text
+   cd no_engineer
+   scp -r * admin@192.168.1.10:~/projects/BusConductor
+   ```
+
 - On the PLC, change the 'current' symlink to point to the new project directory.
 
    ```text
@@ -188,10 +205,10 @@ This example describes the use of Axioline I/O. A similar procedure is used to c
    ln -s BusConductor current
    ```
 
-    This tells the PLCnext Control to use this as the default project, which will load the acf.config file and generic I/O configuration from this directory.
+    This tells the PLCnext Control device to use this as the default project, which will load all the configuration files from this directory.
 
 - Restart the PLCnext runtime to create the BusConductor component.
-- If using the acf.config file in this example, the name of the BusConductor port in the Global Data Space will be "BcComponent1/BusConductor"
+- If using the configuration files in this example, the name of the BusConductor port in the Global Data Space will be "BcComponent1/BusConductor"
 
 You must now send commands to the BcComponent instance from your own application via the Global Data Space. How this is done will be specific to each user application. For example, you can use a gds.config file to connect the BusConductor port to a GDS port in your own C++ project, or you can read and write GDS data by subscribing to the Data Access RSC Service in the PLC. In any case, be sure to include the following logic in your application:
 
@@ -328,7 +345,7 @@ A description of each of the variables in the table below is given in the docume
 
 ### Axioline
 
-If there is an error on the local bus (e.g. missing I/O module), then the Axioline bus will restart automatically when the originally configured I/O module arrangement is detected. This allows for hot-swapping of faulty I/O modules, for example.
+If there is an error on the local bus (e.g. missing I/O module), then the Axioline bus will restart automatically when the originally configured I/O module arrangement is detected. This feature could be used, for example, to replace a faulty I/O module without powering down the PLC. In this case, however, the faulty I/O module will still need to be powered off if it does not support hot-swapping.
 
 ### Inline
 
