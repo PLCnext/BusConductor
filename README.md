@@ -185,7 +185,7 @@ Procedure:
 
    This directory contains the generic Axioline bus configuration, including a valid set of TIC files.
 
-- Using a procedure similar to the one described in the [CppExamples repository](https://github.com/PLCnext/CppExamples/blob/master/Examples/NoEngineer/README.MD),add the following application files to the correct sub-directories on the PLC:
+- Using a procedure similar to the one described in the [CppExamples repository](https://github.com/PLCnext/CppExamples/blob/master/Examples/NoEngineer/README.MD), add the following application files to the correct sub-directories on the PLC:
    - `libBusConductor.so` and all the associated meta configuration files.
    - A PLM configuration file, to load the BusConductor program library.
    - An ESM configuration file, to create an ESM task and an instance of the BusConductor program.
