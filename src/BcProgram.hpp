@@ -1,8 +1,3 @@
-﻿//
-// Copyright (c) 2019 Phoenix Contact GmbH & Co. KG. All rights reserved.
-// Licensed under the MIT. See LICENSE file in the project root for full license information.
-//
-
 #pragma once
 #include "Arp/System/Core/Arp.h"
 #include "Arp/Plc/Commons/Esm/ProgramBase.hpp"
@@ -24,11 +19,15 @@ public: // typedefs
 
 public: // construction/destruction
     BcProgram(BusConductor::BcComponent& bcComponentArg, const String& name);
+#if ARP_ABI_VERSION_MAJOR < 2
     BcProgram(const BcProgram& arg) = delete;
     virtual ~BcProgram() = default;
+#endif
 
 public: // operators
+#if ARP_ABI_VERSION_MAJOR < 2
     BcProgram&  operator=(const BcProgram& arg) = delete;
+#endif
 
 public: // properties
 
@@ -49,6 +48,7 @@ public: /* Ports
 
 private: // fields
     BusConductor::BcComponent& bcComponent;
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////

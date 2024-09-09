@@ -9,6 +9,7 @@
 | Date       | Version | Authors                     |
 |------------|---------|-----------------------------|
 | 22.07.2021 | 1.4     | Martin Boers                |
+| 09.09.2024 | 2.0     | Eduard Münz, Martin Boers   |
 
 ## Description
 
@@ -50,7 +51,7 @@ Before building, use plcncli to set the project target to match your SDK and con
    ```bash
    plcncli get project-sdks                        # Gets the current target(s)
    plcncli set target --remove --name axcf2152     # Removes an existing target from the project
-   plcncli set target --add -n axcf2152 -v 2021.6  # Adds a new target to the project
+   plcncli set target --add -n axcf2152 -v 2024.7  # Adds a new target to the project
    ```
 
 When building from the command line, the following commands should be called in sequence from the project root directory:
@@ -389,15 +390,14 @@ cat /opt/plcnext/logs/Output.log | grep BusConductor.BcComponent
 
 ## How to get support
 
-This app is supported in the forum of the [PLCnext Community](https://www.plcnext-community.net/index.php?option=com_easydiscuss&view=categories&Itemid=221&lang=en).
-Please raise an issue with a detailed error description and always provide a copy of the Output.log file.
+Please raise any issues in the "Issues" section of this Github repository. Please include a detailed error description and a copy of the relevant section of the Arp.log file and the Custom.log file.
 
 ## Design notes
 
-- This app is designed to be used in PLCnext Engineer, but also be useable by other C++ components. Note that the current version of PLCnext Engineer (2020.6) provides limited support for the "Component Ports" feature of the PLCnext Control firmware, and no support for component-only libraries. This project includes some features that work around these limitiations - for example, the only purpose of the program `BcProgram` in the BusConductor library is to force PLCnext Engineer to instantiate `BcComponent`, which would otherwise not be instantiated by PLCnext Engineer.
+This app is designed to be used in PLCnext Engineer, but also be useable by other C++ components. Note that the current version of PLCnext Engineer provides no support for component-only libraries. This project includes some features that work around these limitiations - for example, the only purpose of the program `BcProgram` in the BusConductor library is to force PLCnext Engineer to instantiate `BcComponent`, which would otherwise not be instantiated by PLCnext Engineer.
 
 -----------
 
-Copyright © 2019-2020 Phoenix Contact Electronics GmbH
+Copyright © 2019-2024 Phoenix Contact Electronics GmbH
 
 All rights reserved. This program and the accompanying materials are made available under the terms of the [MIT License](http://opensource.org/licenses/MIT) which accompanies this distribution.

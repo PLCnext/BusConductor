@@ -1,11 +1,10 @@
-﻿//
-// Copyright (c) 2019 Phoenix Contact GmbH & Co. KG. All rights reserved.
-// Licensed under the MIT. See LICENSE file in the project root for full license information.
-//
-
 #include "BcProgram.hpp"
 #include "Arp/System/Commons/Logging.h"
+#if ARP_ABI_VERSION_MAJOR < 2
 #include "Arp/System/Core/ByteConverter.hpp"
+#else
+#include "Arp/Base/Core/ByteConverter.hpp"
+#endif
 
 namespace BusConductor
 {

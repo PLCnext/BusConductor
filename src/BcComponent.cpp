@@ -1,14 +1,26 @@
-﻿//
-// Copyright (c) 2019 Phoenix Contact GmbH & Co. KG. All rights reserved.
-// Licensed under the MIT. See LICENSE file in the project root for full license information.
-//
-
 #include "BcComponent.hpp"
 #include "Arp/Plc/Commons/Esm/ProgramComponentBase.hpp"
+#include "BusConductorLibrary.hpp"
+
 #include <fstream>
 
 namespace BusConductor
 {
+#if ARP_ABI_VERSION_MAJOR < 2
+BcComponent::BcComponent(IApplication& application, const String& name)
+: ComponentBase(application, ::BusConductor::BusConductorLibrary::GetInstance(), name, ComponentCategory::Custom)
+    , programProvider(*this)
+    , ProgramComponentBase(::BusConductor::BusConductorLibrary::GetInstance().GetNamespace(), programProvider)
+    , updateThread(this, &BusConductor::BcComponent::Update, 1000, "CyclicUpdate")
+#else
+BcComponent::BcComponent(ILibrary& library, const String& name)
+    : ComponentBase(library, name, ComponentCategory::Custom, GetDefaultStartOrder())
+    , programProvider(*this)
+    , ProgramComponentBase(::BusConductor::BusConductorLibrary::GetInstance().GetNamespace(), programProvider)
+	, updateThread(this, &BusConductor::BcComponent::Update, 1000, "CyclicUpdate")
+#endif
+{
+}
 
 void BcComponent::Initialize()
 {
@@ -51,9 +63,8 @@ void BcComponent::SetupConfig()
     ProgramComponentBase::SetupConfig();
 
     // setup project config here
-
     // Start the worker thread
-    if (allSystemsGo) this->updateThread.Start();
+       if (allSystemsGo) this->updateThread.Start();
 }
 
 void BcComponent::ResetConfig()
@@ -62,10 +73,16 @@ void BcComponent::ResetConfig()
     ProgramComponentBase::ResetConfig();
 
     // implement this inverse to SetupConfig() and LoadConfig()
-
     this->updateThread.Stop();
-
 }
+
+void BcComponent::PowerDown()
+{
+	// implement this only if data shall be retained even on power down event
+	// will work only for PLCnext controllers with an "Integrated uninterruptible power supply (UPS)"
+	// Available with 2021.6 FW
+}
+
 
 void BcComponent::Update()
 {
@@ -144,7 +161,7 @@ bool BcComponent::ConfigureLocalIo(bool validateConfig, string configFile)
             this->log.Error("Cannot open file {0}.", configFile);
             return false;
         }
-        
+
         if(getline(f, line))
         {
             line.erase(remove_if(line.begin(), line.end(), ::isspace), line.end());

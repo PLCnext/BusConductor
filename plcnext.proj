@@ -1,5 +1,9 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="utf-8"?>
 <ProjectSettings xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.phoenixcontact.com/schema/cliproject">
-  <Target>AXCF2152,2021.6.0 (21.6.0.46)</Target>
-  <Id>e77f84d3-f5e5-4ec8-a2f3-3e2ce11fbb00</Id>
+  <Id>05add6ca-426c-440b-986a-5e53d7b898d4</Id>
+  <Version>4.0</Version>
+  <Name>BusConductor</Name>
+  <GenerateDTArrayNameByType>true</GenerateDTArrayNameByType>
+  <GenerateNamespaces>true</GenerateNamespaces>
+  <Target>AXCF2152,2024.7.0 (24.7.0.12 alpha)</Target>
 </ProjectSettings>
